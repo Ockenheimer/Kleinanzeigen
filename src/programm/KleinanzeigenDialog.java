@@ -285,25 +285,21 @@ public class KleinanzeigenDialog extends javax.swing.JFrame {
 
     private void jButtonSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSaveActionPerformed
         try {
-            /*try {
-            PrintWriter out = new PrintWriter(jTextField1.getText());
-            out.println("Gewinn: " + gewinn.toString() + "\n"
-            + "\n"
-            + "Bestand: " + "\n"
-            + bestand.toString());
-            out.close();
-            
-            } catch (FileNotFoundException ex) {
-            JOptionPane.showMessageDialog(rootPane, "Datei nicht gefunden.");
-            }*/
-            List<String> lines = Arrays.asList("The first line", "The second line");
-            Path file = Paths.get("the-file-name.txt");
+
+            List<String> lines = new ArrayList<>();
+            lines.add("Gewinn: " + gewinn.toString());
+            lines.add("");
+            lines.add("Bestand: ");
+            for (Artikel artikel : bestand) {
+                lines.add(artikel.toString());
+            }
+
+            Path file = Paths.get(jTextField1.getText());
             Files.write(file, lines, Charset.forName("UTF-8"));
+
         } catch (IOException ex) {
             Logger.getLogger(KleinanzeigenDialog.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-
     }//GEN-LAST:event_jButtonSaveActionPerformed
 
     @SuppressWarnings("empty-statement")
@@ -311,18 +307,35 @@ public class KleinanzeigenDialog extends javax.swing.JFrame {
         try {
             File file = new File(jTextField1.getText());
             Scanner input = new Scanner(file);
-            List<String> list = new ArrayList<String>();
 
+            int counter = 0;
+            bestand.clear();
             while (input.hasNextLine()) {
-                list.add(input.nextLine());
+                String line = input.nextLine();
+                if (counter == 0) {
+                    // Der Grund warum ich eigene Dateiformate nicht mag und alles in XML Speicher.
+                    // Die Zeile erst nach ": " Splitten, dahinter ist der Betrag. Am Ende steht " EURO" hinter der 
+                    // Zahl. Den damit splitten und das erste Element nehmen und dann das KOmma gegen den Punkt tauschen :/
+                    gewinn = new Geldbetrag(Double.valueOf(line.split(": ")[1].split(" EURO")[0].replace(",", ".")));
+                }
+                
+                //Ab hier kommen die Artikel ins Spiel;
+                if(counter > 2) {
+                    String[] attributes = line.split(" - ");
+                    bestand.add(new Artikel(attributes[1], new Geldbetrag(Double.valueOf(attributes[2].split(" EURO")[0].replace(",", ".")))));
+                }
+                
+                // hochzählen nicht vergessen.
+                counter++;
             }
 
-            System.out.println(list.toString());
         } catch (FileNotFoundException ex) {
             Logger.getLogger(KleinanzeigenDialog.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ArtikelException ex) {
+            Logger.getLogger(KleinanzeigenDialog.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-
+        
+        aktuallisiereAnzeige();
     }//GEN-LAST:event_jToggleButtonLoadActionPerformed
 
     /**
